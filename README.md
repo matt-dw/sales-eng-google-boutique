@@ -79,9 +79,6 @@ For all installation options, see [the project's original README.md](https://git
 
 ### Running on Google Kubernetes Engine (GKE)
 
-> 💡 Recommended if you're using Google Cloud Platform and want to try it on
-> a realistic cluster.
-
 1.  Create a Google Kubernetes Engine cluster and make sure `kubectl` is pointing
     to the cluster.
 
@@ -112,10 +109,37 @@ For all installation options, see [the project's original README.md](https://git
         - pushes them to the container registry
         - applies the `./kubernetes-manifests` deploying the application to
           Kubernetes.
-    
-        **Troubleshooting:** If you get "No space left on device" error on Google
-        Cloud Shell, you can build the images on Google Cloud Build: [Enable the
-        Cloud Build
-        API](https://console.cloud.google.com/flows/enableapi?apiid=cloudbuild.googleapis.com),
-        then run `skaffold run -p gcb --default-repo=gcr.io/[PROJECT_ID]` instead.
 
+### Using Service Preview
+
+See the Service Preview Quick Start for more information.
+
+The `frontend`, `currencyservice` and `adservice` are already instrumented with annotation and automatically injects the Service Preview Traffic-Agent.
+
+You should be able to connect to the remote cluster:
+
+    ```sh
+    sudo edgectl daemon
+    edgectl connect
+    ```
+    
+Check the status of the connection and the available intercepts:
+
+    ```sh
+    edgectl status
+    edgectl intercept list
+    edgectl intercept avail
+    ```
+    
+Intercept the `frontend` deployment and the `currencyservice` deployment, assuming they are running on your local workstation:
+
+    ```sh
+    edgectl intercept add frontend -n my-frontend-intercept -t localhost:8080
+    ```
+    
+  The local `frontend` service is now accessible using the given Preview URL.
+  Re-use the same UUID token to intercept requests going to the GRPC `currencyservice` as headers are propagated from the `frontend` service to its dependencies:
+    
+    ```sh
+    edgectl intercept add currencyservice -n my-currencyservice-intercept -m "x-service-preview=$UUID$" -t localhost:7000 --grpc
+    ```
