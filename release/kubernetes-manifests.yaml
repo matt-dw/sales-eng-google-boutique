@@ -32,9 +32,10 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: gcr.io/google-samples/microservices-demo/emailservice:v0.2.0
+        image: agervais/emailservice:v0.3.0
         ports:
         - containerPort: 8080
+          name: grpc
         env:
         - name: PORT
           value: "8080"
@@ -69,7 +70,7 @@ spec:
   ports:
   - name: grpc
     port: 5000
-    targetPort: 8080
+    targetPort: grpc
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -86,9 +87,10 @@ spec:
     spec:
       containers:
         - name: server
-          image: gcr.io/google-samples/microservices-demo/checkoutservice:v0.2.0
+          image: agervais/checkoutservice:v0.3.0
           ports:
           - containerPort: 5050
+            name: grpc
           readinessProbe:
             exec:
               command: ["/bin/grpc_health_probe", "-addr=:5050"]
@@ -137,7 +139,7 @@ spec:
   ports:
   - name: grpc
     port: 5050
-    targetPort: 5050
+    targetPort: grpc
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -155,9 +157,10 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: gcr.io/google-samples/microservices-demo/recommendationservice:v0.2.0
+        image: agervais/recommendationservice:v0.3.0
         ports:
         - containerPort: 8080
+          name: grpc
         readinessProbe:
           periodSeconds: 5
           exec:
@@ -196,7 +199,7 @@ spec:
   ports:
   - name: grpc
     port: 8080
-    targetPort: 8080
+    targetPort: grpc
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -212,12 +215,14 @@ spec:
         app: frontend
       annotations:
         sidecar.istio.io/rewriteAppHTTPProbers: "true"
+        getambassador.io/inject-traffic-agent: enabled
     spec:
       containers:
         - name: server
-          image: gcr.io/google-samples/microservices-demo/frontend:v0.2.0
+          image: agervais/frontend:v0.3.0
           ports:
           - containerPort: 8080
+            name: http
           readinessProbe:
             initialDelaySeconds: 10
             httpGet:
@@ -278,20 +283,16 @@ spec:
   ports:
   - name: http
     port: 80
-    targetPort: 8080
+    targetPort: http
 ---
-apiVersion: v1
-kind: Service
+apiVersion: getambassador.io/v2
+kind: Mapping
 metadata:
-  name: frontend-external
+  name: frontend
+  namespace: default
 spec:
-  type: LoadBalancer
-  selector:
-    app: frontend
-  ports:
-  - name: http
-    port: 80
-    targetPort: 8080
+  prefix: /
+  service: frontend:80
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -309,9 +310,10 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: gcr.io/google-samples/microservices-demo/paymentservice:v0.2.0
+        image: agervais/paymentservice:v0.3.0
         ports:
         - containerPort: 50051
+          name: grpc
         env:
         - name: PORT
           value: "50051"
@@ -340,7 +342,7 @@ spec:
   ports:
   - name: grpc
     port: 50051
-    targetPort: 50051
+    targetPort: grpc
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -358,9 +360,10 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: gcr.io/google-samples/microservices-demo/productcatalogservice:v0.2.0
+        image: agervais/productcatalogservice:v0.3.0
         ports:
         - containerPort: 3550
+          name: grpc
         env:
         - name: PORT
           value: "3550"
@@ -397,7 +400,7 @@ spec:
   ports:
   - name: grpc
     port: 3550
-    targetPort: 3550
+    targetPort: grpc
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -415,9 +418,10 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: gcr.io/google-samples/microservices-demo/cartservice:v0.2.0
+        image: agervais/cartservice:v0.3.0
         ports:
         - containerPort: 7070
+          name: grpc
         env:
         - name: REDIS_ADDR
           value: "redis-cart:6379"
@@ -453,41 +457,7 @@ spec:
   ports:
   - name: grpc
     port: 7070
-    targetPort: 7070
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: loadgenerator
-spec:
-  selector:
-    matchLabels:
-      app: loadgenerator
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: loadgenerator
-      annotations:
-        sidecar.istio.io/rewriteAppHTTPProbers: "true"
-    spec:
-      terminationGracePeriodSeconds: 5
-      restartPolicy: Always
-      containers:
-      - name: main
-        image: gcr.io/google-samples/microservices-demo/loadgenerator:v0.2.0
-        env:
-        - name: FRONTEND_ADDR
-          value: "frontend:80"
-        - name: USERS
-          value: "10"
-        resources:
-          requests:
-            cpu: 300m
-            memory: 256Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
+    targetPort: grpc
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -501,11 +471,14 @@ spec:
     metadata:
       labels:
         app: currencyservice
+      annotations:
+        getambassador.io/inject-traffic-agent: enabled
+        getambassador.io/inject-traffic-agent-grpc: "true"
     spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: gcr.io/google-samples/microservices-demo/currencyservice:v0.2.0
+        image: agervais/currencyservice:v0.3.0
         ports:
         - name: grpc
           containerPort: 7000
@@ -543,7 +516,7 @@ spec:
   ports:
   - name: grpc
     port: 7000
-    targetPort: 7000
+    targetPort: grpc
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -560,9 +533,10 @@ spec:
     spec:
       containers:
       - name: server
-        image: gcr.io/google-samples/microservices-demo/shippingservice:v0.2.0
+        image: agervais/shippingservice:v0.3.0
         ports:
         - containerPort: 50051
+          name: grpc
         env:
         - name: PORT
           value: "50051"
@@ -600,7 +574,7 @@ spec:
   ports:
   - name: grpc
     port: 50051
-    targetPort: 50051
+    targetPort: grpc
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -665,15 +639,19 @@ spec:
       app: adservice
   template:
     metadata:
+      annotations:
+        getambassador.io/inject-traffic-agent: enabled
+        getambassador.io/inject-traffic-agent-grpc: "true"
       labels:
         app: adservice
     spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: gcr.io/google-samples/microservices-demo/adservice:v0.2.0
+        image: agervais/adservice:v0.3.0
         ports:
         - containerPort: 9555
+          name: grpc
         env:
         - name: PORT
           value: "9555"
@@ -712,5 +690,5 @@ spec:
   ports:
   - name: grpc
     port: 9555
-    targetPort: 9555
+    targetPort: grpc
 ---
