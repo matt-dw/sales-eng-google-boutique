@@ -118,28 +118,28 @@ The `frontend`, `currencyservice` and `adservice` are already instrumented with 
 
 You should be able to connect to the remote cluster:
 
-    ```sh
-    sudo edgectl daemon
-    edgectl connect
-    ```
+```sh
+sudo edgectl daemon
+edgectl connect
+```
     
 Check the status of the connection and the available intercepts:
 
-    ```sh
-    edgectl status
-    edgectl intercept list
-    edgectl intercept avail
-    ```
+```sh
+edgectl status
+edgectl intercept list
+edgectl intercept avail
+```
     
 Intercept the `frontend` deployment and the `currencyservice` deployment, assuming they are running on your local workstation:
 
-    ```sh
-    edgectl intercept add frontend -n my-frontend-intercept -t localhost:8080
-    ```
+```sh
+edgectl intercept add frontend -n my-frontend-intercept -t localhost:8080
+```
     
-  The local `frontend` service is now accessible using the given Preview URL.
-  Re-use the same UUID token to intercept requests going to the GRPC `currencyservice` as headers are propagated from the `frontend` service to its dependencies:
+The local `frontend` service is now accessible using the given Preview URL.
+Re-use the same UUID token to intercept requests going to the GRPC `currencyservice` as headers are propagated from the `frontend` service to its dependencies:
     
-    ```sh
-    edgectl intercept add currencyservice -n my-currencyservice-intercept -m "x-service-preview=$UUID$" -t localhost:7000 --grpc
-    ```
+```sh
+edgectl intercept add currencyservice -n my-currencyservice-intercept -m "x-service-preview=$UUID$" -t localhost:7000 --grpc
+```
