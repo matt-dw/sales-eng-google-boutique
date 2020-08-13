@@ -96,7 +96,7 @@ For all installation options, see [the project's original README.md](https://git
 3.  Deploy the demo code
     1. Using Pre-Built Container Images:
     
-        Run `k apply -n default -f ./release/kubernetes-manifests.yaml` to deploy the app.
+        Run `k apply -n default -f https://raw.githubusercontent.com/datawire/microservices-demo/master/release/kubernetes-manifests.yaml` to deploy the app.
         
     2. Building images from scratch:
     
