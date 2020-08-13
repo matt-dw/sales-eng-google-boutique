@@ -22,6 +22,9 @@ spec:
       app: adservice
   template:
     metadata:
+      annotations:
+        getambassador.io/inject-traffic-agent: enabled
+        getambassador.io/inject-traffic-agent-grpc: "true"
       labels:
         app: adservice
     spec:
@@ -31,6 +34,7 @@ spec:
         image: adservice
         ports:
         - containerPort: 9555
+          name: grpc
         env:
         - name: PORT
           value: "9555"
@@ -69,4 +73,4 @@ spec:
   ports:
   - name: grpc
     port: 9555
-    targetPort: 9555
+    targetPort: grpc

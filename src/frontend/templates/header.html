@@ -26,10 +26,10 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB"
         crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="/static/styles/styles.css">
-    <link rel="stylesheet" type="text/css" href="/static/styles/cart.css">
-    <link rel="stylesheet" type="text/css" href="/static/styles/order.css">
-    <link rel='shortcut icon' type='image/x-icon' href='/static/favicon.ico' />
+    <link rel="stylesheet" type="text/css" href="{{$.path_prefix}}/static/styles/styles.css">
+    <link rel="stylesheet" type="text/css" href="{{$.path_prefix}}/static/styles/cart.css">
+    <link rel="stylesheet" type="text/css" href="{{$.path_prefix}}/static/styles/order.css">
+    <link rel='shortcut icon' type='image/x-icon' href='{{$.path_prefix}}/static/favicon.ico' />
 </head>
 
 <body>
@@ -42,15 +42,15 @@
                 {{ if $.show_currency }}
                 <div class="h-controls">
                     <div class="h-control">
-                        <img src="/static/icons/Hipster_CurrencyIcon.svg" alt="icon" class="icon" />
-                        <form method="POST" class="controls-form" action="/setCurrency" id="currency_form" >
+                        <img src="{{$.path_prefix}}/static/icons/Hipster_CurrencyIcon.svg" alt="icon" class="icon" />
+                        <form method="POST" class="controls-form" action="{{$.path_prefix}}/setCurrency" id="currency_form" >
                             <select name="currency_code" onchange="document.getElementById('currency_form').submit();">
                                     {{range $.currencies}}
                                 <option value="{{.}}" {{if eq . $.user_currency}}selected="selected"{{end}}>{{.}}</option>
                                 {{end}}
                             </select>
                         </form>
-                        <img src="/static/icons/Hipster_DownArrow.svg" alt="icon" class="icon arrow" />
+                        <img src="{{$.path_prefix}}/static/icons/Hipster_DownArrow.svg" alt="icon" class="icon arrow" />
                     </div>
                 </div>
                 {{ end }}
@@ -59,12 +59,12 @@
         </div>
         <div class="navbar sub-navbar">
             <div class="container d-flex justify-content-between">
-                <a href="/" class="navbar-brand d-flex align-items-center">
-                    <img src="/static/icons/Hipster_NavLogo.svg" alt="logo" class="logo" />
+                <a href="{{$.path_prefix}}/" class="navbar-brand d-flex align-items-center">
+                    <img src="{{$.path_prefix}}/static/icons/Hipster_NavLogo.svg" alt="logo" class="logo" />
                 </a>
                 <div class="controls">
-                    <a href="/cart">
-                        <img src="/static/icons/Hipster_CartIcon.svg" alt="cart-icon" class="logo" />
+                    <a href="{{$.path_prefix}}/cart">
+                        <img src="{{$.path_prefix}}/static/icons/Hipster_CartIcon.svg" alt="cart-icon" class="logo" />
                         <span>Cart
                             {{ if $.cart_size }}
                             <span class="badge badge-blue">{{$.cart_size}}</span>

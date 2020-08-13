@@ -31,6 +31,7 @@ spec:
         image: recommendationservice
         ports:
         - containerPort: 8080
+          name: grpc
         readinessProbe:
           periodSeconds: 5
           exec:
@@ -69,4 +70,4 @@ spec:
   ports:
   - name: grpc
     port: 8080
-    targetPort: 8080
+    targetPort: grpc

@@ -2,14 +2,17 @@
 
 The Ad service provides advertisement based on context keys. If no context keys are provided then it returns random ads.
 
-## Building locally
+## Running locally
 
 The Ad service uses gradlew to compile/install/distribute. Gradle wrapper is already part of the source code. To build Ad Service, run:
 
-```
-./gradlew installDist
-```
-It will create executable script src/adservice/build/install/hipstershop/bin/AdService
+    ./gradlew installDist
+    
+It will create executable script `src/adservice/build/install/hipstershop/bin/AdService`, run it:
+
+    ./build/install/hipstershop/bin/AdService
+    
+  By default, gRPC traffic will be served on localhost:9555
 
 ### Upgrading gradle version
 If you need to upgrade the version of gradle then run

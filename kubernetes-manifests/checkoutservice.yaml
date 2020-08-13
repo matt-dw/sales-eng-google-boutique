@@ -30,6 +30,7 @@ spec:
           image: checkoutservice
           ports:
           - containerPort: 5050
+            name: grpc
           readinessProbe:
             exec:
               command: ["/bin/grpc_health_probe", "-addr=:5050"]
@@ -78,4 +79,4 @@ spec:
   ports:
   - name: grpc
     port: 5050
-    targetPort: 5050
+    targetPort: grpc

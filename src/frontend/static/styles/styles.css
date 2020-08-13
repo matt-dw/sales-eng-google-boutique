@@ -362,7 +362,6 @@ main.home {
 
 .h-jumbotron {
   border-radius: 0;
-  background: url(/static/images/HeroBannerImage2.png) no-repeat top center;
   background-size: cover;
 }
 
@@ -550,7 +549,8 @@ main.home {
 .aws-platform,
 .onprem-platform,
 .azure-platform,
-.gcp-platform {
+.gcp-platform,
+.local-platform {
   position: fixed;
   top: 0;
   left: 0;
@@ -576,6 +576,11 @@ main.home {
   background-color: #4285f4;
 }
 
+.local-platform,
+.local-platform .platform-flag {
+  font-size: unset;
+  background-color: #5f3eff;
+}
 
 .azure-platform,
 .azure-platform .platform-flag {

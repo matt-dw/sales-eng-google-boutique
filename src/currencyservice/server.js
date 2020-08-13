@@ -57,7 +57,7 @@ const protoLoader = require('@grpc/proto-loader');
 const MAIN_PROTO_PATH = path.join(__dirname, './proto/demo.proto');
 const HEALTH_PROTO_PATH = path.join(__dirname, './proto/grpc/health/v1/health.proto');
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || "7000";
 
 const shopProto = _loadProto(MAIN_PROTO_PATH).hipstershop;
 const healthProto = _loadProto(HEALTH_PROTO_PATH).grpc.health.v1;

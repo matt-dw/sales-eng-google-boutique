@@ -87,6 +87,7 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	if err := templates.ExecuteTemplate(w, "home", map[string]interface{}{
 		"session_id":    sessionID(r),
 		"request_id":    r.Context().Value(ctxKeyRequestID{}),
+		"path_prefix":   r.Context().Value(ctxRootPath{}),
 		"user_currency": currentCurrency(r),
 		"show_currency": true,
 		"currencies":    currencies,
@@ -111,9 +112,12 @@ func (plat *platformDetails) setPlatformDetails(env string) {
 	} else if env == "azure" {
 		plat.provider = "Azure"
 		plat.css = "azure-platform"
-	} else {
+	} else if env == "gcp" {
 		plat.provider = "Google Cloud"
 		plat.css = "gcp-platform"
+	} else {
+		plat.provider, _ = os.Hostname()
+		plat.css = "local-platform"
 	}
 }
 
@@ -164,6 +168,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 	if err := templates.ExecuteTemplate(w, "product", map[string]interface{}{
 		"session_id":      sessionID(r),
 		"request_id":      r.Context().Value(ctxKeyRequestID{}),
+		"path_prefix":     r.Context().Value(ctxRootPath{}),
 		"ad":              fe.chooseAd(r.Context(), p.Categories, log),
 		"user_currency":   currentCurrency(r),
 		"show_currency":   true,
@@ -198,7 +203,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 		renderHTTPError(log, r, w, errors.Wrap(err, "failed to add to cart"), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("location", "/cart")
+	w.Header().Set("location", fmt.Sprintf("%v/cart", r.Context().Value(ctxRootPath{})))
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -210,7 +215,7 @@ func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Reques
 		renderHTTPError(log, r, w, errors.Wrap(err, "failed to empty cart"), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("location", "/")
+	w.Header().Set("location", fmt.Sprintf("%v/", r.Context().Value(ctxRootPath{})))
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -272,6 +277,7 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 	if err := templates.ExecuteTemplate(w, "cart", map[string]interface{}{
 		"session_id":       sessionID(r),
 		"request_id":       r.Context().Value(ctxKeyRequestID{}),
+		"path_prefix":      r.Context().Value(ctxRootPath{}),
 		"user_currency":    currentCurrency(r),
 		"currencies":       currencies,
 		"recommendations":  recommendations,
@@ -345,6 +351,7 @@ func (fe *frontendServer) placeOrderHandler(w http.ResponseWriter, r *http.Reque
 	if err := templates.ExecuteTemplate(w, "order", map[string]interface{}{
 		"session_id":      sessionID(r),
 		"request_id":      r.Context().Value(ctxKeyRequestID{}),
+		"path_prefix":     r.Context().Value(ctxRootPath{}),
 		"user_currency":   currentCurrency(r),
 		"show_currency":   false,
 		"currencies":      currencies,
@@ -366,7 +373,7 @@ func (fe *frontendServer) logoutHandler(w http.ResponseWriter, r *http.Request) 
 		c.MaxAge = -1
 		http.SetCookie(w, c)
 	}
-	w.Header().Set("Location", "/")
+	w.Header().Set("location", fmt.Sprintf("%v/", r.Context().Value(ctxRootPath{})))
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -385,9 +392,9 @@ func (fe *frontendServer) setCurrencyHandler(w http.ResponseWriter, r *http.Requ
 	}
 	referer := r.Header.Get("referer")
 	if referer == "" {
-		referer = "/"
+		referer = fmt.Sprintf("%v/", r.Context().Value(ctxRootPath{}))
 	}
-	w.Header().Set("Location", referer)
+	w.Header().Set("location", referer)
 	w.WriteHeader(http.StatusFound)
 }
 
@@ -410,12 +417,13 @@ func renderHTTPError(log logrus.FieldLogger, r *http.Request, w http.ResponseWri
 	if templateErr := templates.ExecuteTemplate(w, "error", map[string]interface{}{
 		"session_id":  sessionID(r),
 		"request_id":  r.Context().Value(ctxKeyRequestID{}),
+		"path_prefix": r.Context().Value(ctxRootPath{}),
 		"error":       errMsg,
 		"status_code": code,
 		"status":      http.StatusText(code),
 	}); templateErr != nil {
 		log.Println(templateErr)
-	}		
+	}
 }
 
 func currentCurrency(r *http.Request) string {

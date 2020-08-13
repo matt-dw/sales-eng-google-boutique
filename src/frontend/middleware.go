@@ -16,15 +16,29 @@ package main
 
 import (
 	"context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	// ServicePreviewId is the key containing the request Headers to be propagated to downstream services.
+	// TODO: We could support multiple headers being propagated, using an array or pattern of some sort
+	ServicePreviewId = "x-service-preview"
+
+	// ServicePreviewOriginalPath is the key containing the request Header with the Service Preview injected path prefix
+	ServicePreviewOriginalPath = "x-service-preview-path"
+)
+
 type ctxKeyLog struct{}
 type ctxKeyRequestID struct{}
+type ctxPropagatedHeaders struct{}
+type ctxRootPath struct{}
 
 type logHandler struct {
 	log  *logrus.Logger
@@ -99,6 +113,46 @@ func ensureSessionID(next http.Handler) http.HandlerFunc {
 			sessionID = c.Value
 		}
 		ctx := context.WithValue(r.Context(), ctxKeySessionID{}, sessionID)
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
+	}
+}
+
+func UnaryRequestPropagation() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		ctx = injectHeaders(ctx)
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
+func injectHeaders(ctx context.Context) context.Context {
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		md = metadata.MD{}
+	}
+	vals := ctx.Value(ctxPropagatedHeaders{}).(string)
+	if vals != "" {
+		md.Set(ServicePreviewId, vals)
+	}
+	return metadata.NewOutgoingContext(ctx, md)
+}
+
+func setBasePathPrefix(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		requestBasePath := ""
+		originalPath := r.Header.Get(ServicePreviewOriginalPath)
+		if originalPath != "" {
+			requestBasePath = strings.TrimSuffix(originalPath, r.URL.Path)
+		}
+		ctx := context.WithValue(r.Context(), ctxRootPath{}, requestBasePath)
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
+	}
+}
+
+func grabHeadersForPropagation(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), ctxPropagatedHeaders{}, r.Header.Get(ServicePreviewId))
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	}

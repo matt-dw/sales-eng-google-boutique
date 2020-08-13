@@ -30,6 +30,7 @@ spec:
         image: shippingservice
         ports:
         - containerPort: 50051
+          name: grpc
         env:
         - name: PORT
           value: "50051"
@@ -67,4 +68,4 @@ spec:
   ports:
   - name: grpc
     port: 50051
-    targetPort: 50051
+    targetPort: grpc

@@ -31,6 +31,7 @@ spec:
         image: cartservice
         ports:
         - containerPort: 7070
+          name: grpc
         env:
         - name: REDIS_ADDR
           value: "redis-cart:6379"
@@ -66,4 +67,4 @@ spec:
   ports:
   - name: grpc
     port: 7070
-    targetPort: 7070
+    targetPort: grpc

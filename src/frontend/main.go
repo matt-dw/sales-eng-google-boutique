@@ -114,13 +114,13 @@ func main() {
 	}
 	addr := os.Getenv("LISTEN_ADDR")
 	svc := new(frontendServer)
-	mustMapEnv(&svc.productCatalogSvcAddr, "PRODUCT_CATALOG_SERVICE_ADDR")
-	mustMapEnv(&svc.currencySvcAddr, "CURRENCY_SERVICE_ADDR")
-	mustMapEnv(&svc.cartSvcAddr, "CART_SERVICE_ADDR")
-	mustMapEnv(&svc.recommendationSvcAddr, "RECOMMENDATION_SERVICE_ADDR")
-	mustMapEnv(&svc.checkoutSvcAddr, "CHECKOUT_SERVICE_ADDR")
-	mustMapEnv(&svc.shippingSvcAddr, "SHIPPING_SERVICE_ADDR")
-	mustMapEnv(&svc.adSvcAddr, "AD_SERVICE_ADDR")
+	mustMapEnv(&svc.productCatalogSvcAddr, "PRODUCT_CATALOG_SERVICE_ADDR", "productcatalogservice:3550")
+	mustMapEnv(&svc.currencySvcAddr, "CURRENCY_SERVICE_ADDR", "currencyservice:7000")
+	mustMapEnv(&svc.cartSvcAddr, "CART_SERVICE_ADDR", "cartservice:7070")
+	mustMapEnv(&svc.recommendationSvcAddr, "RECOMMENDATION_SERVICE_ADDR", "recommendationservice:8080")
+	mustMapEnv(&svc.checkoutSvcAddr, "CHECKOUT_SERVICE_ADDR", "checkoutservice:5050")
+	mustMapEnv(&svc.shippingSvcAddr, "SHIPPING_SERVICE_ADDR", "shippingservice:50051")
+	mustMapEnv(&svc.adSvcAddr, "AD_SERVICE_ADDR", "adservice:9555")
 
 	mustConnGRPC(ctx, &svc.currencySvcConn, svc.currencySvcAddr)
 	mustConnGRPC(ctx, &svc.productCatalogSvcConn, svc.productCatalogSvcAddr)
@@ -146,6 +146,8 @@ func main() {
 	var handler http.Handler = r
 	handler = &logHandler{log: log, next: handler} // add logging
 	handler = ensureSessionID(handler)             // add session ID
+	handler = setBasePathPrefix(handler)           // set base path if served under prefix
+	handler = grabHeadersForPropagation(handler)   // catch headers for propagation
 	handler = &ochttp.Handler{                     // add opencensus instrumentation
 		Handler:     handler,
 		Propagation: &b3.HTTPFormat{}}
@@ -253,10 +255,14 @@ func initProfiling(log logrus.FieldLogger, service, version string) {
 	log.Warn("warning: could not initialize Stackdriver profiler after retrying, giving up")
 }
 
-func mustMapEnv(target *string, envKey string) {
+func mustMapEnv(target *string, envKey string, defaultValue string) {
 	v := os.Getenv(envKey)
 	if v == "" {
-		panic(fmt.Sprintf("environment variable %q not set", envKey))
+		if defaultValue == "" {
+			panic(fmt.Sprintf("environment variable %q not set", envKey))
+		} else {
+			v = defaultValue
+		}
 	}
 	*target = v
 }
@@ -266,6 +272,7 @@ func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {
 	*conn, err = grpc.DialContext(ctx, addr,
 		grpc.WithInsecure(),
 		grpc.WithTimeout(time.Second*3),
+		grpc.WithUnaryInterceptor(UnaryRequestPropagation()),
 		grpc.WithStatsHandler(&ocgrpc.ClientHandler{}))
 	if err != nil {
 		panic(errors.Wrapf(err, "grpc: failed to connect %s", addr))

@@ -26,12 +26,14 @@ spec:
         app: frontend
       annotations:
         sidecar.istio.io/rewriteAppHTTPProbers: "true"
+        getambassador.io/inject-traffic-agent: enabled
     spec:
       containers:
         - name: server
           image: frontend
           ports:
           - containerPort: 8080
+            name: http
           readinessProbe:
             initialDelaySeconds: 10
             httpGet:
@@ -92,17 +94,13 @@ spec:
   ports:
   - name: http
     port: 80
-    targetPort: 8080
+    targetPort: http
 ---
-apiVersion: v1
-kind: Service
+apiVersion: getambassador.io/v2
+kind: Mapping
 metadata:
-  name: frontend-external
+  name: frontend
+  namespace: default
 spec:
-  type: LoadBalancer
-  selector:
-    app: frontend
-  ports:
-  - name: http
-    port: 80
-    targetPort: 8080
+  prefix: /
+  service: frontend:80
