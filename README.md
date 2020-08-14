@@ -117,7 +117,7 @@ For all installation options, see [the project's original README.md](https://git
 
 ### Using Service Preview
 
-See the Service Preview Quick Start for more information.
+See the [Service Preview Quick Start](https://www.getambassador.io/docs/latest/topics/using/edgectl/service-preview-install/) for more information.
 
 The `frontend`, `currencyservice` and `adservice` are already instrumented with annotation and automatically injects the Service Preview Traffic-Agent.
 
