@@ -79,26 +79,31 @@ For all installation options, see [the project's original README.md](https://git
 
 ### Running on Google Kubernetes Engine (GKE)
 
-1.  Create a Google Kubernetes Engine cluster and make sure `kubectl` is pointing
-    to the cluster.
+1.  Create a Google Kubernetes Engine cluster with at least 4 nodes, and make sure `kubectl` is pointing to the cluster.
 
     ```sh
-    k gke create --node-count 4
+    # Using the Datawire kubectl-gke plugin
+    kubectl gke create --node-count 4
     ```
 
 2.  Install Ambassador Edge Stack, with Traffic-Agent RBAC in the `default` namespace.
 
     ```sh
     edgectl install
-    k apply -f https://getambassador.io/yaml/traffic-agent-rbac.yaml
+    
+    kubectl apply -f https://getambassador.io/yaml/traffic-agent-rbac.yaml
     ```
 
 3.  Deploy the demo code
-    1. Using Pre-Built Container Images:
+    1. **Option 1** - Using Pre-Built Container Images:
     
-        Run `k apply -n default -f https://raw.githubusercontent.com/datawire/microservices-demo/master/release/kubernetes-manifests.yaml` to deploy the app.
+        Deploy the Boutique app by running 
         
-    2. Building images from scratch:
+        ```sh
+        kubectl apply -n default -f https://raw.githubusercontent.com/datawire/microservices-demo/master/release/kubernetes-manifests.yaml
+        ```
+        
+    2. **Option 2** - Building images from scratch:
     
         In the root of this repository, run `skaffold run --default-repo=`,
         where [PUBLIC_REPO] is your Docker Hub repository or GCR `gcr.io/[PROJECT_ID]`.
