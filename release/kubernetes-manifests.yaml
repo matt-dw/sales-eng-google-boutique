@@ -32,7 +32,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: agervais/emailservice:v0.3.0
+        image: agervais/emailservice:v0.3.1
         ports:
         - containerPort: 8080
           name: grpc
@@ -87,7 +87,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: agervais/checkoutservice:v0.3.0
+          image: agervais/checkoutservice:v0.3.1
           ports:
           - containerPort: 5050
             name: grpc
@@ -112,14 +112,14 @@ spec:
             value: "currencyservice:7000"
           - name: CART_SERVICE_ADDR
             value: "cartservice:7070"
+          - name: JAEGER_SERVICE_ADDR
+            value: "otel-collector.monitoring:14268"
           # - name: DISABLE_STATS
           #   value: "1"
           # - name: DISABLE_TRACING
           #   value: "1"
           # - name: DISABLE_PROFILER
           #   value: "1"
-          # - name: JAEGER_SERVICE_ADDR
-          #   value: "jaeger-collector:14268"
           resources:
             requests:
               cpu: 100m
@@ -157,7 +157,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: agervais/recommendationservice:v0.3.0
+        image: agervais/recommendationservice:v0.3.1
         ports:
         - containerPort: 8080
           name: grpc
@@ -219,7 +219,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: agervais/frontend:v0.3.0
+          image: agervais/frontend:v0.3.1
           ports:
           - containerPort: 8080
             name: http
@@ -258,12 +258,12 @@ spec:
             value: "adservice:9555"
           - name: ENV_PLATFORM
             value: "gcp"
+          - name: JAEGER_SERVICE_ADDR
+            value: "otel-collector.monitoring:14268"
           # - name: DISABLE_TRACING
           #   value: "1"
           # - name: DISABLE_PROFILER
           #   value: "1"
-          # - name: JAEGER_SERVICE_ADDR
-          #   value: "jaeger-collector:14268"
           resources:
             requests:
               cpu: 100m
@@ -310,7 +310,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: agervais/paymentservice:v0.3.0
+        image: agervais/paymentservice:v0.3.1
         ports:
         - containerPort: 50051
           name: grpc
@@ -360,21 +360,21 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: agervais/productcatalogservice:v0.3.0
+        image: agervais/productcatalogservice:v0.3.1
         ports:
         - containerPort: 3550
           name: grpc
         env:
         - name: PORT
           value: "3550"
+        - name: JAEGER_SERVICE_ADDR
+          value: "otel-collector.monitoring:14268"
         # - name: DISABLE_STATS
         #   value: "1"
         # - name: DISABLE_TRACING
         #   value: "1"
         # - name: DISABLE_PROFILER
         #   value: "1"
-        # - name: JAEGER_SERVICE_ADDR
-        #   value: "jaeger-collector:14268"
         readinessProbe:
           exec:
             command: ["/bin/grpc_health_probe", "-addr=:3550"]
@@ -418,7 +418,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: agervais/cartservice:v0.3.0
+        image: agervais/cartservice:v0.3.1
         ports:
         - containerPort: 7070
           name: grpc
@@ -478,7 +478,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: agervais/currencyservice:v0.3.0
+        image: agervais/currencyservice:v0.3.1
         ports:
         - name: grpc
           containerPort: 7000
@@ -533,21 +533,21 @@ spec:
     spec:
       containers:
       - name: server
-        image: agervais/shippingservice:v0.3.0
+        image: agervais/shippingservice:v0.3.1
         ports:
         - containerPort: 50051
           name: grpc
         env:
         - name: PORT
           value: "50051"
+        - name: JAEGER_SERVICE_ADDR
+          value: "otel-collector.monitoring:14268"
         # - name: DISABLE_STATS
         #   value: "1"
         # - name: DISABLE_TRACING
         #   value: "1"
         # - name: DISABLE_PROFILER
         #   value: "1"
-        # - name: JAEGER_SERVICE_ADDR
-        #   value: "jaeger-collector:14268"
         readinessProbe:
           periodSeconds: 5
           exec:
@@ -648,7 +648,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: server
-        image: agervais/adservice:v0.3.0
+        image: agervais/adservice:v0.3.1
         ports:
         - containerPort: 9555
           name: grpc
@@ -659,8 +659,8 @@ spec:
         #   value: "1"
         # - name: DISABLE_TRACING
         #   value: "1"
-        #- name: JAEGER_SERVICE_ADDR
-        #  value: "jaeger-collector:14268"
+        - name: JAEGER_SERVICE_ADDR
+          value: "otel-collector.monitoring:14268"
         resources:
           requests:
             cpu: 200m
