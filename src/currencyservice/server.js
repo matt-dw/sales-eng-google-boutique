@@ -34,6 +34,7 @@ if(process.env.DISABLE_TRACING) {
 else {
   console.log("Tracing enabled.")
   require('@google-cloud/trace-agent').start();
+  // TODO: OpenTelemetry tracing
 }
 
 if(process.env.DISABLE_DEBUGGER) {

@@ -63,9 +63,6 @@ Find **Protocol Buffers Descriptions** at the [`./pb` directory](./pb).
   Google Cloud, this code path remains inactive.
 - **[Skaffold](https://skaffold.dev):** Application
   is deployed to Kubernetes with a single command using Skaffold.
-- **Synthetic Load Generation:** The application demo comes with a background
-  job that creates realistic usage patterns on the website using
-  [Locust](https://locust.io/) load generator.
 
 ## Installation
 

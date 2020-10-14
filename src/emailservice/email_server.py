@@ -185,6 +185,9 @@ if __name__ == '__main__':
       raise KeyError()
     else:
       logger.info("Tracing enabled.")
+
+      # TODO: Add OpenTelemetry/Jaeger tracing
+
       sampler = always_on.AlwaysOnSampler()
       exporter = stackdriver_exporter.StackdriverExporter(
         project_id=os.environ.get('GCP_PROJECT_ID'),
