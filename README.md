@@ -71,8 +71,12 @@ For all installation options, see [the project's original README.md](https://git
 ### Prerequisites
 
    - kubectl (can be installed via `gcloud components install kubectl`)
-   - [edgectl](https://www.getambassador.io/docs/latest/tutorials/getting-started/)
+   - [telepresence](https://www.getambassador.io/docs/telepresence/latest/quick-start/)
    - [skaffold]( https://skaffold.dev/docs/install/) ([ensure version ≥v1.10](https://github.com/GoogleContainerTools/skaffold/releases))
+   
+   - **Note: Telepresence and the preview URL functionality should work with most ingress configurations, including straightforward load balancer setups.  
+Telepresence will discover/prompt during first use for this info and make its best guess at figuring this out and ask you to confirm or update   this.   
+See the [Ambassador EdgeStack quick start guide](https://www.getambassador.io/docs/edge-stack/latest/tutorials/getting-started/) to deploy AES Ingress/API gateway if you are building a new cluser and need a ingress/gateway solution.
 
 ### Running on Google Kubernetes Engine (GKE)
 
@@ -83,15 +87,7 @@ For all installation options, see [the project's original README.md](https://git
     kubectl gke create --node-count 4
     ```
 
-2.  Install Ambassador Edge Stack, with Traffic-Agent RBAC in the `default` namespace.
-
-    ```sh
-    edgectl install
-    
-    kubectl apply -f https://getambassador.io/yaml/traffic-agent-rbac.yaml
-    ```
-
-3.  Deploy the demo code
+2.  Deploy the demo code
     1. **Option 1** - Using Pre-Built Container Images:
     
         Deploy the Boutique app by running 
@@ -112,36 +108,135 @@ For all installation options, see [the project's original README.md](https://git
         - applies the `./kubernetes-manifests` deploying the application to
           Kubernetes.
 
-### Using Service Preview
+### Using Telepresence
 
-See the [Service Preview Quick Start](https://www.getambassador.io/docs/latest/topics/using/edgectl/service-preview-install/) for more information.
+See the [Telepresence Quick Start](https://www.getambassador.io/docs/telepresence/latest/quick-start/) for more information.
 
-The `frontend`, `currencyservice` and `adservice` are already instrumented with annotation and automatically injects the Service Preview Traffic-Agent.
+The `frontend`, `currencyservice` and `adservice` are already instrumented.
 
 You should be able to connect to the remote cluster:
 
 ```sh
-sudo edgectl daemon
-edgectl connect
+telepresence connect
 ```
     
 Check the status of the connection and the available intercepts:
 
 ```sh
-edgectl status
-edgectl intercept list
-edgectl intercept avail
+telepresence status
+telepresence list -n [namespace]
 ```
     
 Intercept the `frontend` deployment and the `currencyservice` deployment, assuming they are running on your local workstation:
 
 ```sh
-edgectl intercept add frontend -n my-frontend-intercept -t localhost:8080
+telepresence intercept frontend -n [namespace] --port 8080
 ```
-    
-The local `frontend` service is now accessible using the given Preview URL.
-Re-use the same UUID token to intercept requests going to the GRPC `currencyservice` as headers are propagated from the `frontend` service to its dependencies:
-    
+
+You will be asked for the following information:
+
+Ingress layer 3 address: This would usually be the internal address of your ingress controller in the format <service name>.namespace. For example, if you have a service ambassador-edge-stack in the ambassador namespace, you would enter ambassador-edge-stack.ambassador.
+
+Ingress port: The port on which your ingress controller is listening (often 80 for non-TLS and 443 for TLS).
+
+Ingress TLS encryption: Whether the ingress controller is expecting TLS communication on the specified port.
+
+Ingress layer 5 hostname: If your ingress controller routes traffic based on a domain name (often using the Host HTTP header), this is the value you would need to enter here.
+
+Telepresence supports any ingress controller, not just Ambassador Edge Stack.
+For the example below, you will create a preview URL that will send traffic to the ambassador service in the ambassador namespace on port 443 using TLS encryption and setting the Host HTTP header to dev-environment.edgestack.me:
+
+Terminal
 ```sh
-edgectl intercept add currencyservice -n my-currencyservice-intercept -m "x-service-preview=$UUID$" -t localhost:7000 --grpc
+$ telepresence intercept frontend -n boutique --port 8080
+
+To create a preview URL, telepresence needs to know how cluster
+ingress works for this service.  Please Confirm the ingress to use.
+
+1/4: What's your ingress' layer 3 (IP) address?
+     You may use an IP address or a DNS name (this is usually a
+     "service.namespace" DNS name).
+
+       [default: ambassador.ambassador]: 
+
+2/4: What's your ingress' layer 4 address (TCP port number)?
+
+       [default: 443]: 
+
+3/4: Does that TCP port on your ingress use TLS (as opposed to cleartext)?
+
+       [default: y]: 
+
+4/4: If required by your ingress, specify a different layer 5 hostname
+     (TLS-SNI, HTTP "Host" header) to access this service.
+
+       [default: demo-aes.com]: 
+
+Using Deployment frontend
+intercepted
+    Intercept name  : frontend-boutique
+    State           : ACTIVE
+    Workload kind   : Deployment
+    Destination     : 127.0.0.1:8080
+    Intercepting    : HTTP requests that match all of:
+      header("x-telepresence-intercept-id") ~= regexp("e551e7c8-580a-4a0d-8401-e3643a2a8489:frontend-boutique")
+    Preview URL     : https://heuristic-sutherland-2278.preview.edgestack.me
+    Layer 5 Hostname: demo-aes.com
+
+```    
+The local `frontend` service is now accessible using the given Preview URL.  
+Re-use the same UUID token to intercept requests going to the GRPC `currencyservice` as headers are propagated from the `frontend` service to its dependencies:  
+
+Terminal    
+```sh
+telepresence intercept currencyservice -n boutique --http-match="x-telepresence-intercept-id"="e551e7c8-580a-4a0d-8401-e3643a2a8489:frontend-boutique" --port 7000 -u=false  
 ```
+
+Note `-u=false` sets Preview URL to false for the currencyservice intercept.  Since we are using the same `--http-match=` we do not need to create a separate Preview URL.  
+We will use the Preview URL created for the Frontend intercept.
+
+With both intercepts running and both `frontend` and `currencyservice` running locally you can now make code changes to both or either and have those changes reflected in the Preview URL, without interfering with other developers.
+
+
+To see this in action make the following changes to the frontend: 
+../src/frontend/main.go file:
+
+Line 40: defaultCurrency = "USD" , change to "BIT"
+Line 55: "TRY": true}, append list to include "BIT":true}
+
+```go
+const (
+	port            = "8080"
+	defaultCurrency = "BIT"
+	cookieMaxAge    = 60 * 60 * 48
+
+	cookiePrefix    = "shop_"
+	cookieSessionID = cookiePrefix + "session-id"
+	cookieCurrency  = cookiePrefix + "currency"
+)
+
+var (
+	whitelistedCurrencies = map[string]bool{
+		"USD": true,
+		"EUR": true,
+		"CAD": true,
+		"JPY": true,
+		"GBP": true,
+		"TRY": true,
+		"BIT": true}
+```
+
+To see this in action make the following changes to the currencyservice: 
+../src/currencyservice/data/currency_conversion.json:
+
+Add a value for Bitcoin conversion.
+```json
+  "PHP": "59.083",
+  "SGD": "1.5349",
+  "THB": "36.012",
+  "ZAR": "16.0583",
+  "BIT": "0.002"
+}
+```
+
+Save the files. Restart local services and reload your preview url.
